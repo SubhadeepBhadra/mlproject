@@ -26,17 +26,23 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
     try:
         report = {}
 
-        for i in range(len(list(models))):
+        for i in range(len(list(models))): 
             model = list(models.values())[i]
             para=param[list(models.keys())[i]]
+            model_name = list(models.keys())[i]
 
-            gs = GridSearchCV(model,para,cv=3)
-            gs.fit(X_train,y_train)
+            try:
+                gs = GridSearchCV(model,para,cv=3)
+                gs.fit(X_train,y_train)
 
-            model.set_params(**gs.best_params_)
-            model.fit(X_train,y_train)
-
-            #model.fit(X_train, y_train)  # Train model
+                model.set_params(**gs.best_params_) 
+                model.fit(X_train,y_train)
+            except AttributeError as ae:
+                # Skip sklearn incompatible models (e.g., CatBoost with newer sklearn)
+                if '__sklearn_tags__' in str(ae):
+                    print(f"Skipping {model_name} due to sklearn compatibility issue")
+                    continue
+                raise
 
             y_train_pred = model.predict(X_train)
 
@@ -46,7 +52,7 @@ def evaluate_models(X_train, y_train,X_test,y_test,models,param):
 
             test_model_score = r2_score(y_test, y_test_pred)
 
-            report[list(models.keys())[i]] = test_model_score
+            report[model_name] = test_model_score
 
         return report
 
