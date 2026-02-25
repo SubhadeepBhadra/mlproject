@@ -1,16 +1,14 @@
-import os # this is for creating directory and file handling
-import sys # this is for exception handling and to get the details of the exception
+import os 
+import sys 
+import numpy as np 
+import pandas as pd 
+import dill 
+import pickle 
+from sklearn.metrics import r2_score 
+from sklearn.model_selection import GridSearchCV 
+from src.exception import CustomException 
 
-import numpy as np # this is for numerical operations
-import pandas as pd # this is for data manipulation and analysis
-import dill # this is for serializing and deserializing Python objects, similar to pickle but with more features
-import pickle # this is for serializing and deserializing Python objects, it converts Python objects into a byte stream and vice versa
-from sklearn.metrics import r2_score # this is for evaluating the performance of regression models, it calculates the R-squared score which indicates how well the model fits the data
-from sklearn.model_selection import GridSearchCV # this is for hyperparameter tuning, it performs an exhaustive search over specified parameter values for an estimator and finds the best combination of parameters that gives the best performance on the training data
-
-from src.exception import CustomException # this is for handling custom exceptions, it allows us to create our own exception class that can provide more specific error messages and handle exceptions in a more controlled way
-
-def save_object(file_path, obj): # this function is for saving a Python object to a file, it takes the file path and the object to be saved as arguments
+def save_object(file_path, obj): 
     try:
         dir_path = os.path.dirname(file_path)
 

@@ -1,24 +1,25 @@
-import os # the function of this module is to interact with the operating system, such as creating directories, joining paths, etc.
-import sys # this module provides access to some variables used or maintained by the interpreter and to functions that interact strongly with the interpreter. It is always available.
-from dataclasses import dataclass # this module provides a decorator and functions for automatically adding generated special methods such as __init__() and __repr__() to user-defined classes. It is available in Python 3.7 and later.
+import os
+import sys
+from dataclasses import dataclass
 
-from sklearn.ensemble import ( # these are ensemble learning methods for regression tasks
-    AdaBoostRegressor, # this is an ensemble learning method that combines multiple weak learners to create a strong learner for regression tasks.
-    GradientBoostingRegressor, # this is an ensemble learning method that builds a model in a stage-wise fashion and generalizes them by allowing optimization of an arbitrary differentiable loss function for regression tasks.
-    RandomForestRegressor, # this is an ensemble learning method that constructs a multitude of decision trees at training time and outputs the mean prediction of the individual trees for regression tasks.
+from catboost import CatBoostRegressor
+from sklearn.ensemble import (
+    AdaBoostRegressor,
+    GradientBoostingRegressor,
+    RandomForestRegressor,
 )
-from sklearn.linear_model import LinearRegression # this is a linear model for regression tasks that assumes a linear relationship between the input variables and the target variable.
-from sklearn.metrics import r2_score # this is a metric for evaluating the performance of regression models, which represents the proportion of the variance in the dependent variable that is predictable from the independent variables.
-from sklearn.neighbors import KNeighborsRegressor # this is a non-parametric method used for regression tasks that predicts the target variable based on the k-nearest neighbors in the feature space.
-from sklearn.tree import DecisionTreeRegressor # this is a decision tree algorithm for regression tasks that splits the data into subsets based on the feature values and makes predictions based on the mean value of the target variable in each leaf node.
-from xgboost import XGBRegressor # this is an optimized gradient boosting library that implements machine learning algorithms under the Gradient Boosting framework for regression tasks. It is designed to be highly efficient, flexible, and portable.
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeRegressor
+from xgboost import XGBRegressor
 
-from src.exception import CustomException # this is a custom exception class defined in the src.exception module, which is used to handle exceptions in a specific way for this project.
-from src.logger import logging # this is a logging module defined in the src.logger module, which is used to log messages for this project. It provides a way to configure and use logging in a consistent manner across the project.
+from src.exception import CustomException
+from src.logger import logging
 
-from src.utils import save_object,evaluate_models # these are utility functions defined in the src.utils module. The save_object function is used to save a Python object to a file, and the evaluate_models function is used to evaluate multiple regression models and return their performance metrics.
+from src.utils import save_object,evaluate_models
 
-@dataclass # this is a decorator that automatically generates special methods for the class, such as __init__() and __repr__(), based on the class attributes defined in the class body.
+@dataclass
 class ModelTrainerConfig:
     trained_model_file_path=os.path.join("artifacts","model.pkl")
 
@@ -42,18 +43,27 @@ class ModelTrainer:
                 "Gradient Boosting": GradientBoostingRegressor(),
                 "Linear Regression": LinearRegression(),
                 "XGBRegressor": XGBRegressor(),
+                "CatBoosting Regressor": CatBoostRegressor(verbose=False),
                 "AdaBoost Regressor": AdaBoostRegressor(),
             }
             params={
                 "Decision Tree": {
                     'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+                    # 'splitter':['best','random'],
+                    # 'max_features':['sqrt','log2'],
                 },
                 "Random Forest":{
+                    # 'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+                 
+                    # 'max_features':['sqrt','log2',None],
                     'n_estimators': [8,16,32,64,128,256]
                 },
                 "Gradient Boosting":{
+                    # 'loss':['squared_error', 'huber', 'absolute_error', 'quantile'],
                     'learning_rate':[.1,.01,.05,.001],
                     'subsample':[0.6,0.7,0.75,0.8,0.85,0.9],
+                    # 'criterion':['squared_error', 'friedman_mse'],
+                    # 'max_features':['auto','sqrt','log2'],
                     'n_estimators': [8,16,32,64,128,256]
                 },
                 "Linear Regression":{},
@@ -61,8 +71,14 @@ class ModelTrainer:
                     'learning_rate':[.1,.01,.05,.001],
                     'n_estimators': [8,16,32,64,128,256]
                 },
+                "CatBoosting Regressor":{
+                    'depth': [6,8,10],
+                    'learning_rate': [0.01, 0.05, 0.1],
+                    'iterations': [30, 50, 100]
+                },
                 "AdaBoost Regressor":{
                     'learning_rate':[.1,.01,0.5,.001],
+                    # 'loss':['linear','square','exponential'],
                     'n_estimators': [8,16,32,64,128,256]
                 }
                 
@@ -82,7 +98,7 @@ class ModelTrainer:
             best_model = models[best_model_name]
 
             if best_model_score<0.6:
-                raise CustomException("No best model found", sys)
+                raise CustomException("No best model found")
             logging.info(f"Best found model on both training and testing dataset")
 
             save_object(
@@ -92,8 +108,8 @@ class ModelTrainer:
 
             predicted=best_model.predict(X_test)
 
-            r2 = r2_score(y_test, predicted)
-            return r2
+            r2_square = r2_score(y_test, predicted)
+            return r2_square
             
 
 
